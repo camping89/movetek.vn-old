@@ -1,0 +1,86 @@
+﻿@model NewsItemListModel
+@{
+    Layout = "_ColumnsTwo";
+
+    //title
+    Html.AddTitleParts(T("PageTitle.NewsArchive").Text);
+    //page class
+    Html.AppendPageCssClassParts("html-news-list-page");
+}
+@section left{
+    @if (Model.NewsCategoryModels.Count > 0)
+    {
+        <div class="block block-category-navigation">
+            <div class="title">
+                <strong>@T("Categories")</strong>
+            </div>
+            <div class="listbox">
+                <ul class="list">
+                    @foreach (var category in Model.NewsCategoryModels)
+                    {
+
+                        var active = category.Id == Model.CurrentCategoryId;
+                        var liClass = active ? "active" : "inactive";
+                        <li class="@liClass">
+
+                            <a href="@Url.Action("List", "News", new { newsCategoryId = category.Id })">
+                                @category.Name
+                            </a>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    }
+}
+
+<div class="page news-list-page">
+    <div class="page-title">
+        <a href="@Url.RouteUrl("NewsRSS", new { languageId = Model.WorkingLanguageId })" class="link-rss" title="@T("News.RSS.Hint")">@T("News.RSS")</a>
+        <h1>@T("News")</h1>
+    </div>
+    <div class="page-body">
+        @await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.NewsListPageBeforeItems })
+        <div class="news-items">
+            @foreach (var item in Model.NewsItems)
+            {
+                <div class="news-item">
+
+                    <div class="news-head">
+                        <span class="news-date">
+                            <span class="day">@item.CreatedOn.Day.ToString("00")</span>
+                            <span class="month">@item.CreatedOn.ToString("MMM")</span>
+                            <span class="year">@item.CreatedOn.Year</span>
+                        </span>
+                        <div class="buttons">
+                            <a href="@Url.RouteUrl("NewsItem", new {SeName = item.SeName})" class="read-more">@T("News.MoreInfo")</a>
+                        </div>
+                    </div>
+                    @if (!string.IsNullOrEmpty(item.ImageUrl))
+                    {
+                        <div class="post-picture">
+                            <a href="@Url.RouteUrl("NewsItem", new {SeName = item.SeName})" alt="@item.Title"><img src="@item.ImageUrl" title="@item.Title" alt="@item.Title" /></a>
+                        </div>
+                    }
+                    <div class="news-body">
+                        <a class="news-title" href="@Url.RouteUrl("NewsItem", new {SeName = item.SeName})">@item.Title</a>
+                        <div class="news-text">
+                            @Html.Raw(item.Short)
+                        </div>
+                    </div>
+                    @await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.NewsListPageInsideItem, additionalData = item })
+                </div>
+            }
+        </div>
+        @{
+            var pager = Html.Pager(Model.PagingFilteringContext).QueryParam("pagenumber");
+        }
+        @if (!pager.IsEmpty())
+        {
+            <div class="pager">
+                @pager
+            </div>
+        }
+        @await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.NewsListPageAfterItems })
+    </div>
+</div>
